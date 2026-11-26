@@ -10,6 +10,8 @@
     "format": "biome format --write"
   },
   "dependencies": {
+    "@google/genai": "^3.6.1",
+    "@tailwindcss/postcss": "^4.3.5",
     "next": "16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0"
