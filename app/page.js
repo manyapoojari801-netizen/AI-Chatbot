@@ -1,9 +1,8 @@
 
-
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 
 export default function Home() {
   const [message, setMessage] = useState("");
@@ -20,29 +19,33 @@ export default function Home() {
 
     const userMessage = message.trim();
 
-    setChat(prev => [
-      ...prev,
+    const updatedChat = [
+      ...chat,
       { sender: "You", text: userMessage }
-    ]);
+    ];
 
+    setChat(updatedChat);
     setMessage("");
     setLoading(true);
 
     try {
+      const messages = updatedChat.map(item => ({
+        role: item.sender === "You" ? "user" : "model",
+        content: item.text
+      }));
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          message: userMessage
-        })
+        body: JSON.stringify({ messages })
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "API request failed");
+        throw new Error(data.error || "Something went wrong.");
       }
 
       setChat(prev => [
@@ -55,7 +58,7 @@ export default function Home() {
         ...prev,
         {
           sender: "Bot",
-          text: error.message || "Something went wrong!"
+          text: error.message || "Please try again later."
         }
       ]);
     } finally {
@@ -65,7 +68,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen flex items-center justify-center p-3 sm:p-6">
-
       <div className="w-full max-w-4xl h-[90vh] bg-white rounded-2xl shadow-xl flex flex-col overflow-hidden border border-slate-200">
 
         <header className="bg-indigo-600 text-white p-5 flex items-center gap-3">
@@ -118,9 +120,15 @@ export default function Home() {
                   {item.sender === "You" ? "You" : "AI Assistant"}
                 </p>
 
-                <p className="whitespace-pre-wrap break-words text-sm sm:text-base leading-7">
-                  {item.text}
-                </p>
+                {item.sender === "Bot" ? (
+                  <div className="text-sm sm:text-base leading-7 break-words prose prose-slate max-w-none">
+                    <ReactMarkdown>{item.text}</ReactMarkdown>
+                  </div>
+                ) : (
+                  <p className="whitespace-pre-wrap break-words text-sm sm:text-base leading-7">
+                    {item.text}
+                  </p>
+                )}
               </div>
             </div>
           ))}
@@ -131,7 +139,6 @@ export default function Home() {
                 <span className="text-sm text-slate-500">
                   AI is typing
                 </span>
-
                 <div className="flex gap-1">
                   <span className="typing-dot w-2 h-2 bg-indigo-500 rounded-full"></span>
                   <span className="typing-dot w-2 h-2 bg-indigo-500 rounded-full"></span>
